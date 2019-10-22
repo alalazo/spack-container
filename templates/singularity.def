@@ -1,0 +1,49 @@
+Bootstrap: library
+From: {{ base_image }}
+
+%post
+  # Set additional variables needed to build inside a container
+  export FORCE_UNSAFE_CONFIGURE=1
+  # FIXME: Debian derivative specific
+  export DEBIAN_FRONTEND=noninteractive
+
+{% if system %}
+  # Update, install and cleanup of system packages
+  {{ system.update }}
+  {{ system.install }} {{ system.packages | join | replace('\n', ' ') }}
+  {{ system.clean }}
+{% endif %}
+
+  # Install Spack in /opt/spack and avoid getting config files under ~/.spack
+  git clone --depth=1 https://github.com/spack/spack.git /opt/spack
+  . /opt/spack/share/spack/setup-env.sh
+  spack compiler add --scope=site
+
+  # Create the manifest file for the installation in /opt/spack-environment
+  mkdir /opt/spack-environment && cd /opt/spack-environment
+  cat << EOF > spack.yaml
+{{ environment }}
+EOF
+
+  # Install all the required software
+  spack install
+
+  # Setup run environment here, since it might require to
+  # inspect installation folders
+  # spack run-env >> $SINGULARITY_ENVIRONMENT
+
+  # Clean-up
+  rm -rf /opt/spack
+
+%environment
+  export PATH=/opt/view/bin:${PATH}
+
+%runscript
+  exec "$@"
+
+{% if labels %}
+%labels
+  {% for label, value in labels.items() %}
+  {{ label }} {{ value }}
+  {% endfor %}
+{% endif %}
