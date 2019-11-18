@@ -2,12 +2,14 @@ Bootstrap: library
 From: {{ base_image }}
 
 %post
-  # Set additional variables needed to build inside a container
-  export FORCE_UNSAFE_CONFIGURE=1
-  # FIXME: Debian derivative specific
-  export DEBIAN_FRONTEND=noninteractive
-
 {% if system %}
+{% if system.environment %}
+  # Variables needed to build inside a container
+{% for line in system.environment %}
+  {{ line }}
+{% endfor %}
+{% endif %}
+
   # Update, install and cleanup of system packages
   {{ system.update }}
   {{ system.install }} {{ system.packages | join | replace('\n', ' ') }}
@@ -37,6 +39,16 @@ EOF
 
 %environment
   export PATH=/opt/view/bin:${PATH}
+{% if apps %}
+{% for application, help_text in apps.items() %}
+
+%apprun {{ application }}
+    exec /opt/view/bin/{{ application }} "$@"
+
+%apphelp {{ application }}
+    {{help_text }}
+{% endfor %}
+{% endif %}
 
 %runscript
   exec "$@"

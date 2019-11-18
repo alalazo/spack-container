@@ -1,0 +1,13 @@
+{
+  "ubuntu:18.04": {
+    "update": "apt-get -yqq update && apt-get -yqq upgrade",
+    "install": "apt-get -yqq install",
+    "clean": "rm -rf /var/lib/apt/lists/*",
+    "environment": [],
+    "build": "spack/ubuntu-bionic",
+    "build_tags": {
+      "develop": "latest",
+      "prerelease": "prerelease"
+    }
+  }
+}
