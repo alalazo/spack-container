@@ -1,44 +1,25 @@
-Bootstrap: library
-From: {{ base_image }}
+Bootstrap: docker
+From: {{ build.image }}:{{ build.tag }}
+Stage: build
 
 %post
-{% if system %}
-{% if system.environment %}
-  # Variables needed to build inside a container
-{% for line in system.environment %}
-  {{ line }}
-{% endfor %}
-{% endif %}
-
-  # Update, install and cleanup of system packages
-  {{ system.update }}
-  {{ system.install }} {{ system.packages | join | replace('\n', ' ') }}
-  {{ system.clean }}
-{% endif %}
-
-  # Install Spack in /opt/spack and avoid getting config files under ~/.spack
-  git clone --depth=1 https://github.com/spack/spack.git /opt/spack
-  . /opt/spack/share/spack/setup-env.sh
-  spack compiler add --scope=site
-
   # Create the manifest file for the installation in /opt/spack-environment
-  mkdir /opt/spack-environment && cd /opt/spack-environment
+  mkdir {{ paths.environment }} && cd {{ paths.environment }}
   cat << EOF > spack.yaml
-{{ environment }}
+{{ manifest }}
 EOF
 
   # Install all the required software
+  . /opt/spack/share/spack/setup-env.sh
   spack install
+  spack autoremove -y
+  spack env activate --sh -d . >> /etc/profile.d/z10_spack_environment.sh
 
-  # Setup run environment here, since it might require to
-  # inspect installation folders
-  # spack run-env >> $SINGULARITY_ENVIRONMENT
+  # Turn soft links into hard links to work-around a known issue:
+  # https://github.com/sylabs/singularity/issues/4583
+  find {{ paths.environment }} -type l -exec /bin/bash -c 'ln -f "$(readlink -m "$0")" "$0"' {} \;
+  find {{ paths.view }} -type l -exec /bin/bash -c 'ln -f "$(readlink -m "$0")" "$0"' {} \;
 
-  # Clean-up
-  rm -rf /opt/spack
-
-%environment
-  export PATH=/opt/view/bin:${PATH}
 {% if apps %}
 {% for application, help_text in apps.items() %}
 
@@ -50,8 +31,27 @@ EOF
 {% endfor %}
 {% endif %}
 
+Bootstrap: docker
+From: {{ run.image }}
+Stage: final
+
+%files from build
+  {{ paths.environment }} /opt
+  {{ paths.store }} /opt
+  {{ paths.view }} /opt
+  /etc/profile.d/z10_spack_environment.sh /etc/profile.d/z10_spack_environment.sh
+
+%post
+  # Update, install and cleanup of system packages
+  {{ packages.update }}
+  {{ packages.install }} {{ packages.list | join | replace('\n', ' ') }}
+  {{ packages.clean }}
+
 %runscript
   exec "$@"
+
+%environment
+  export PATH=/opt/view/bin:${PATH}
 
 {% if labels %}
 %labels

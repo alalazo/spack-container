@@ -2,6 +2,7 @@
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
+import collections
 try:
     from collections.abc import Mapping
 except ImportError:
@@ -12,95 +13,89 @@ import spack.tengine as tengine
 import spack.util.spack_yaml as syaml
 
 from . import writer
-from ..system import get
+from ..system import build_info, package_info
 from ..environment import to_sh_commands
 
 
 class SingularityContext(tengine.Context):
-    def __init__(self, singularity_config):
+    def __init__(self, config):
         """Context used to generate templates for singularity.
 
         Args:
-            singularity_config (dict): configurations specific to the
+            config (dict): configurations specific to the
                 Singularity definition file to be generated
         """
-        self.singularity_config = singularity_config
+        self.config = config
 
-        manifest = singularity_config['manifest']
+    @tengine.context_property
+    def run(self):
+        """Information related to the run image."""
+        image = self.config['base']['image']
+        Run = collections.namedtuple('Run', ['image'])
+        return Run(image=image)
 
-        # If manifest is not a mapping, it's a path to the
-        # corresponding spack.yaml file that needs to be read
-        if not isinstance(manifest, Mapping):
-            with open(manifest) as f:
-                manifest = syaml.load(f)
+    @tengine.context_property
+    def paths(self):
+        """Important paths in the image"""
+        Paths = collections.namedtuple('Paths', [
+            'environment', 'store', 'view'
+        ])
+        return Paths(
+            environment='/opt/spack-environment',
+            store='/opt/software',
+            view='/opt/view'
+        )
+
+    @tengine.context_property
+    def manifest(self):
+        # Copy in the part of spack.yaml prescribed in the configuration file
+        manifest = self.config['manifest']
+
+        # Ensure that a few paths are where they need to be
+        manifest['config'] = syaml.syaml_dict()
+        manifest['config']['install_tree'] = self.paths.store
+        manifest['concretization'] = 'together'
+        manifest['view'] = self.paths.view
+        manifest = {'spack': manifest}
 
         # FIXME: The copy is needed not to pollute the spack.yaml file
         # FIXME: with default values for attributes
-        import copy
-        m = copy.deepcopy(manifest)
-        spack.environment.validate(m)
+        #import copy
+        #m = copy.deepcopy(manifest)
+        #spack.environment.validate(m)
 
-        if singularity_config['provisioning'] == 'path':
-            s = manifest['spack']
-            # TODO: Add warnings if there's conflicting configuration
-            s['concretization'] = 'together'
-            s['view'] = '/opt/view'
-            s.setdefault('config', {})['install_tree'] = '/opt/software'
-        else:
-            raise RuntimeError('only "path" provisioning supported for the time being supported')
-
-        self.environment_config = manifest
+        return syaml.dump(manifest, default_flow_style=False)
 
     @tengine.context_property
-    def base_image(self):
-        """Base image to be used in the definition file."""
-        # TODO: Check this is a known base image or return a warning
-        return self.singularity_config['base_image']
+    def build(self):
+        """Information related to the build image."""
 
-    @tengine.context_property
-    def system(self):
-        """Returns a dict with the actions needed to prepare the system
-        for Spack installation.
-        """
-        class System(object):
-            def __init__(self, info):
-                self.info = info
+        # Map the final image to the correct build image
+        run_image = self.config['base']['image']
+        spack_version = self.config['base']['spack']
+        image, tag = build_info(run_image, spack_version)
 
-            def __getattr__(self, item):
-                if item in self.info:
-                    return self.info[item]
-                raise AttributeError('trying to access non-existing attribute [0]'.format(item))
-
-        base_os, _, version = self.base_image.partition(':')
-
-        # Construct the dictionary with the information needed to setup the
-        # base image with a working Spack installation
-        info = get('singularity', base_os)
-        version_info = info.pop('versions')
-        if version in version_info:
-            info.update(version_info[version])
-
-        # FIXME: this needs to be generalized, the current implementation
-        # FIXME: is a placeholder.
-        if 'environment' in info:
-            info['environment'] = to_sh_commands(info['environment'])
-
-        # TODO: assert that everything expected is in the dict
-
-        return System(info)
-
-    @tengine.context_property
-    def environment(self):
-        return syaml.dump(self.environment_config, default_flow_style=False)
-
-    @tengine.context_property
-    def apps(self):
-        return self.singularity_config.get('apps', {})
+        Build = collections.namedtuple('Build', ['image', 'tag'])
+        return Build(image=image, tag=tag)
 
     @tengine.context_property
     def labels(self):
         """Labels that will be added to the container image."""
-        return self.singularity_config.get('labels', {})
+        return self.config.get('labels', {})
+
+    @tengine.context_property
+    def packages(self):
+        package_list = self.config.get('packages', None)
+        if not package_list:
+            return package_list
+
+        image = self.config['base']['image']
+        update, install, clean = package_info(image)
+        Packages = collections.namedtuple(
+            'Packages', ['update', 'install', 'list', 'clean']
+        )
+        return Packages(update=update, install=install,
+                        list=package_list, clean=clean)
 
 
 @writer('singularity')
