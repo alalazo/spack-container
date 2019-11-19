@@ -2,8 +2,21 @@
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
+import copy
 
 import spack.schema.env
+
+# We need to take control of a few configuration details
+# to generate
+manifest_schema = copy.deepcopy(
+    spack.schema.env.schema['patternProperties']['^env|spack$']
+)
+del manifest_schema['properties']['concretization']
+del manifest_schema['properties']['view']
+
+config_schema = manifest_schema['properties']['config']
+del config_schema['properties']['install_tree']
+config_schema['additionalProperties'] = False
 
 schema = {
     '$schema': 'http://json-schema.org/schema#',
@@ -47,20 +60,10 @@ schema = {
         },
         # The portion of Spack environment file that can be used
         # to describe what to install and how to configure it
-        'manifest': {
-            # TODO: The spack environment used for the installation.
-            # TODO: It can be either a path to a file or embedded below.
-            'manifest': {
-                'anyOf': [{
-                    'type': 'string'
-                }, spack.schema.env.schema]
-            },
-            # TODO: Limit the schema above with the sections that
-            # TODO: are not allowed
-        },
+        'manifest': manifest_schema,
         'environment': {
             'type': 'array'
-            # TODO: implement this later
+            # TODO: implement this later, it needs #spack/13357
         },
         'labels': {
             'type': 'object',
@@ -70,6 +73,10 @@ schema = {
         #    'type': 'object',
         #    'default': {},
         # }
+        # 'docker': {
+        #    'type': 'object',
+        #    'default': {},
+        # }
     },
-    'required': ['format', 'base', 'provisioning']
+    'required': ['format', 'base', 'provisioning', 'manifest']
 }

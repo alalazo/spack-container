@@ -7,6 +7,7 @@ convenience functions.
 """
 import collections
 
+import spack.schema.env
 import spack.tengine as tengine
 import spack.util.spack_yaml as syaml
 
@@ -84,6 +85,7 @@ class PathContext(tengine.Context):
     @tengine.context_property
     def manifest(self):
         """The spack.yaml file that should be used in the image"""
+        import jsonschema
         # Copy in the part of spack.yaml prescribed in the configuration file
         manifest = self.config['manifest']
 
@@ -93,6 +95,9 @@ class PathContext(tengine.Context):
         manifest['concretization'] = 'together'
         manifest['view'] = self.paths.view
         manifest = {'spack': manifest}
+
+        # Validate the manifest file
+        jsonschema.validate(manifest, schema=spack.schema.env.schema)
 
         return syaml.dump(manifest, default_flow_style=False).strip()
 
