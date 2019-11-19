@@ -41,11 +41,13 @@ Stage: final
   {{ paths.view }} /opt
   /etc/profile.d/z10_spack_environment.sh /etc/profile.d/z10_spack_environment.sh
 
+{% if packages.list %}
 %post
   # Update, install and cleanup of system packages
   {{ packages.update }}
   {{ packages.install }} {{ packages.list | join | replace('\n', ' ') }}
   {{ packages.clean }}
+{% endif %}
 
 %runscript
   exec "$@"

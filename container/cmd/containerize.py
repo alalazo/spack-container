@@ -16,7 +16,7 @@ level = "long"
 def setup_parser(subparser):
     subparser.add_argument(
         '--config', default='./containerize.yaml',
-        help='configuration for the container recipes that are to be generated'
+        help='configuration for the container recipe that will be generated'
     )
 
 
@@ -28,6 +28,6 @@ def containerize(parser, args):
     jsonschema.validate(config, schema=schema)
 
     # Write recipes according to configuration
-    for writer in recipe_writers(config['containerize']):
+    for writer in recipe_writers(config):
         # TODO: make it a class to have more opportunities of extension?
         writer()
