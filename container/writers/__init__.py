@@ -13,14 +13,19 @@ import spack.util.spack_yaml as syaml
 from ..images import build_info, package_info
 
 #: Caches all the writers that are currently supported
-_known_writers = {}
+_writer_factory = {}
 
 
 def writer(name):
-    """Decorator to register a factory for a recipe writer."""
-    def _decorator(func):
-        _known_writers[name] = func
-        return func
+    """Decorator to register a factory for a recipe writer.
+
+    Each factory should take a configuration dictionary and return a
+    properly configured writer that, when called, prints the
+    corresponding recipe.
+    """
+    def _decorator(factory):
+        _writer_factory[name] = factory
+        return factory
     return _decorator
 
 
@@ -32,9 +37,9 @@ def recipe_writers(configuration):
         configuration: how to generate the current recipe
     """
     # FIXME: At the moment return a list with a single writer. Check later
-    # FIXME: if we should generalize multiple writers or simplify this API
+    # FIXME: if we should generalize to multiple writers or simplify this API
     name = configuration['format']
-    return [_known_writers[name](configuration)]
+    return [_writer_factory[name](configuration)]
 
 
 class PathContext(tengine.Context):
@@ -78,6 +83,7 @@ class PathContext(tengine.Context):
 
     @tengine.context_property
     def manifest(self):
+        """The spack.yaml file that should be used in the image"""
         # Copy in the part of spack.yaml prescribed in the configuration file
         manifest = self.config['manifest']
 
@@ -88,21 +94,11 @@ class PathContext(tengine.Context):
         manifest['view'] = self.paths.view
         manifest = {'spack': manifest}
 
-        # Decorate things
-        manifest_str = syaml.dump(manifest, default_flow_style=False).strip()
-        echoed_lines = []
-        for idx, line in enumerate(manifest_str.split('\n')):
-            if idx == 0:
-                echoed_lines.append('&&  (echo "' + line + '" \\')
-                continue
-            echoed_lines.append('&&   echo "' + line + '" \\')
-
-        echoed_lines[-1] = echoed_lines[-1].replace(' \\', ')')
-
-        return '\n'.join(echoed_lines)
+        return syaml.dump(manifest, default_flow_style=False).strip()
 
     @tengine.context_property
     def packages(self):
+        """Additional system packages that are needed at run-time."""
         package_list = self.config.get('packages', None)
         if not package_list:
             return package_list
@@ -114,6 +110,12 @@ class PathContext(tengine.Context):
         )
         return Packages(update=update, install=install,
                         list=package_list, clean=clean)
+
+    def __call__(self):
+        """Prints the recipe."""
+        env = tengine.make_environment()
+        t = env.get_template(self.template_name)
+        print(t.render(**self.to_dict()))
 
 
 # Import after function definition all the modules in this package,
