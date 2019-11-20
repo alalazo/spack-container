@@ -1,0 +1,43 @@
+name: CI
+
+on: 
+  push:
+    branches: 
+      - master
+  pull_request:
+    branches: 
+      - master
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      max-parallel: 1
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: [2.7, 3.6, 3.7]
+    
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: spack-container
+    - name: Clone Spack at develop
+      run: git clone --single-branch --branch=develop --depth=1 https://github.com/spack/spack.git ${HOME}/spack
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Setup extension and run unit tests
+      run: |
+        echo -e "config:\n  extensions:\n  - ${GITHUB_WORKSPACE}" > ${HOME}/spack/etc/spack/config.yaml
+        . ${HOME}/spack/share/spack/setup-env.sh
+        pip install coverage
+        coverage run $(which spack) test --extension=container
+        coverage combine
+    - name: Upload to codecov.io
+      uses: codecov/codecov-action@v1.0.4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./.coverage
+        flags: unittests
