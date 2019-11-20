@@ -31,6 +31,6 @@ jobs:
     - name: Setup extension and run unit tests
       run: |
         echo -e "config:\n  extensions:\n  - /home/runner/work/spack-container/spack-container" > /home/runner/work/spack-container/spack/etc/spack/config.yaml
-        . spack/share/spack/setup-env.sh
+        . /home/runner/work/spack-container/spack/share/spack/setup-env.sh
         spack test --extension=container
         
