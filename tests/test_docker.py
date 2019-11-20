@@ -3,8 +3,6 @@
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 
-import pytest
-
 # FIXME: this needs to be fixed, the command here is necessary
 # FIXME: to trigger loading of extensions during tests
 import spack.main
