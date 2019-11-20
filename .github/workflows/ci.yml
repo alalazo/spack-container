@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
       with:
-        repository: https://github.com/spack/spack.git
+        repository: spack/spack
         path: spack
         fetch-depth: 1
     - uses: actions/checkout@v1
