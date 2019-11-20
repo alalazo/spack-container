@@ -1,0 +1,32 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: [2.7, 3.6, 3.7]
+    
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        repository: https://github.com/spack/spack.git
+        path: spack
+        fetch-depth: 1
+    - uses: actions/checkout@v1
+      with:
+        path: spack-container
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Setup extension and run unit tests
+      run: |
+        echo -e "config:\n  extensions:\n  - ${PWD}/spack-container" > spack/etc/spack/config.yaml
+        . spack/share/spack/setup-env.sh
+        spack test --extension=container
+        
