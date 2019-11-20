@@ -23,14 +23,14 @@ jobs:
       with:
         path: spack-container
     - name: Clone Spack at develop
-      run: git clone --single-branch --branch=develop --depth=1 https://github.com/spack/spack.git /home/runner/work/spack-container/spack
+      run: git clone --single-branch --branch=develop --depth=1 https://github.com/spack/spack.git ${HOME}/spack
     - name: Setup Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
     - name: Setup extension and run unit tests
       run: |
-        echo -e "config:\n  extensions:\n  - /home/runner/work/spack-container/spack-container" > /home/runner/work/spack-container/spack/etc/spack/config.yaml
-        . /home/runner/work/spack-container/spack/share/spack/setup-env.sh
+        echo -e "config:\n  extensions:\n  - ${GITHUB_WORKSPACE}" > ${HOME}/spack/etc/spack/config.yaml
+        . ${HOME}/spack/share/spack/setup-env.sh
         spack test --extension=container
         
