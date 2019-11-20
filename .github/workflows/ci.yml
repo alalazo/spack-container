@@ -1,12 +1,19 @@
 name: CI
 
-on: [push, pull_request]
+on: 
+  push:
+    branches: 
+      - master
+  pull_request:
+    branches: 
+      - master
 
 jobs:
   build:
 
     runs-on: ${{ matrix.os }}
     strategy:
+      max-parallel: 1
       matrix:
         os: [ubuntu-latest, macos-latest]
         python-version: [2.7, 3.6, 3.7]
@@ -16,7 +23,6 @@ jobs:
       with:
         repository: spack/spack
         path: spack
-        fetch-depth: 1
     - uses: actions/checkout@v1
       with:
         path: spack-container
