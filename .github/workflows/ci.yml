@@ -21,11 +21,9 @@ jobs:
     steps:
     - uses: actions/checkout@v1
       with:
-        repository: spack/spack
-        path: spack
-    - uses: actions/checkout@v1
-      with:
         path: spack-container
+    - name: Clone Spack at develop
+      run: git clone --single-branch --branch=develop --depth=1 https://github.com/spack/spack.git spack
     - name: Setup Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
       with:
