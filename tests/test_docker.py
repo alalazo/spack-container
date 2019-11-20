@@ -3,12 +3,7 @@
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
 
-# FIXME: this needs to be fixed, the command here is necessary
-# FIXME: to trigger loading of extensions during tests
-import spack.main
-containerize = spack.main.SpackCommand('containerize')
-
-import spack.extensions.container.writers as writers
+from spack.extensions.container import writers
 
 
 def test_manifest(minimal_configuration):

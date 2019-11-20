@@ -5,12 +5,7 @@
 
 import pytest
 
-# FIXME: this needs to be fixed, the command here is necessary
-# FIXME: to trigger loading of extensions during tests
-import spack.main
-containerize = spack.main.SpackCommand('containerize')
-
-import spack.extensions.container.images as images
+from spack.extensions.container import images
 
 
 @pytest.mark.parametrize('image,spack_version,expected', [
