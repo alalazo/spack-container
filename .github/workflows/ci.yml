@@ -23,7 +23,7 @@ jobs:
       with:
         path: spack-container
     - name: Clone Spack at develop
-      run: git clone --single-branch --branch=develop --depth=1 https://github.com/spack/spack.git spack
+      run: git clone --single-branch --branch=develop --depth=1 https://github.com/spack/spack.git /home/runner/work/spack-container/spack
     - name: Setup Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
       with:
