@@ -35,9 +35,10 @@ jobs:
         pip install coverage
         coverage run $(which spack) test --extension=container
         coverage combine
+        coverage xml
     - name: Upload to codecov.io
       uses: codecov/codecov-action@v1.0.4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./.coverage
+        file: ./coverage.xml
         flags: unittests

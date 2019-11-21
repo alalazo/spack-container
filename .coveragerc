@@ -5,10 +5,6 @@ parallel = True
 concurrency = multiprocessing
 branch = True
 source = container
-omit =
-     lib/spack/spack/test/*
-     lib/spack/docs/*
-     lib/spack/external/*
 
 [report]
 ignore_errors = True
