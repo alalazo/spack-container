@@ -1,3 +1,6 @@
+![](https://github.com/alalazo/spack-container/workflows/CI/badge.svg)
+[![codecov](https://codecov.io/gh/alalazo/spack-container/branch/master/graph/badge.svg)](https://codecov.io/gh/alalazo/spack-container)
+
 Manage the build of your container images using Spack!
 
 ## Quickstart
