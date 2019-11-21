@@ -1,3 +1,5 @@
+![](https://github.com/alalazo/spack-container/workflows/CI/badge.svg)
+
 Manage the build of your container images using Spack!
 
 ## Quickstart
