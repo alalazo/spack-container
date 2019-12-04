@@ -9,7 +9,7 @@ from spack.extensions.container import schema
 
 def test_images_in_schema():
     allowed_images = set(
-        schema.schema['properties']['base']['properties']['image']['enum']
+        schema.container_schema['properties']['base']['properties']['image']['enum']
     )
     images_in_json = set(x for x in images.data())
     assert images_in_json == allowed_images

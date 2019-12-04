@@ -84,29 +84,7 @@ configuration file. Its format is currently experimental
 and might change drastically. As an example you can check 
 out the following:
 ```yaml
-# Select the format of the recipe e.g. docker,
-# singularity or anything else that is currently supported
-format: docker
-
-# Select from a valid list of images
-base:
-  image: "ubuntu:18.04"
-  spack: prerelease
-
-# Provisioning is how we want to make the executables available
-# to the user. At the moment the only value possible is:
-#
-# 1. path (implies "concretization: together", views in "opt/view")
-provisioning: path
-
-# Additional system packages that are needed at runtime
-packages:
-- libgomp1
-
-# Manifest that describes installation and configuration.
-# This is basically a spack.yaml entry with a few field that 
-# can't be set 
-manifest:
+spack:
   specs:
   - gromacs build_type=Release 
   - mpich
@@ -115,7 +93,43 @@ manifest:
     all:
       target: [broadwell]
 
-# Any label that we want to add to the container
-labels:
-  target: "broadwell"
+  container:
+    # Select the format of the recipe e.g. docker,
+    # singularity or anything else that is currently supported
+    format: docker
+    
+    # Select from a valid list of images
+    base:
+      image: "ubuntu:18.04"
+      spack: prerelease
+
+    # Provisioning is how we want to make the executables available
+    # to the user. At the moment it could either be:
+    #
+    # 1. path (implies "concretization: together", views in "opt/view")
+    # 2. modules (implies "views: None", bootstrapping module files, sourcing them on start)
+    #
+    # We can provide a verbose way to set this option to customize the defaults
+    # i.e. to install software in places that are not /opt/software etc.
+    provisioning: path
+
+    # Additional system packages that are needed at runtime
+    packages:
+    - libgomp1
+
+    # Custom environment modifications for the runtime. These are on 
+    # top of those prescribed by package recipes.
+    environment:
+    - action: append_path
+      var: PATH
+      value: /opt/view/bin
+    - action: append_path
+      var: LD_LIBRARY_PATH
+      value: /opt/view/lib
+    - action: unset
+      var: LIBRARY_PATH
+    
+    labels:
+      author: "Massimiliano Culpo"
+      target: "broadwell"```
 ```
