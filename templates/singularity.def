@@ -12,7 +12,9 @@ EOF
   # Install all the required software
   . /opt/spack/share/spack/setup-env.sh
   spack install
+{% if build.tag == 'prerelease' %}
   spack autoremove -y
+{% endif %}
   spack env activate --sh -d . >> /etc/profile.d/z10_spack_environment.sh
 
   # Turn soft links into hard links to work-around a known issue:
