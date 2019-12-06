@@ -37,11 +37,11 @@ schema = {
             'properties': {
                 'image': {
                     'type': 'string',
-                    'enum': ['ubuntu:18.04']
+                    'enum': ['ubuntu:18.04', 'ubuntu:16.04', 'centos:7', 'centos:6']
                 },
                 'spack': {
                     'type': 'string',
-                    'enum': ['develop', 'prerelease']
+                    'enum': ['develop', 'prerelease', '0.13.2']
                 }
             }
         },

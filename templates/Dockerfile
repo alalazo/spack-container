@@ -7,7 +7,11 @@ RUN mkdir {{ paths.environment }} \
 {{ manifest }} > {{ paths.environment }}/spack.yaml
 
 # Install the software, remove unecessary deps and strip executables
+{% if build.tag == 'prerelease' %}
 RUN cd {{ paths.environment }} && spack install && spack autoremove -y
+{% else %}
+RUN cd {{ paths.environment }} && spack install
+{% endif %}
 RUN cd {{ paths.view }}/bin && strip -s * || exit 0
 RUN cd {{ paths.view }}/lib && strip -s * || exit 0
 
