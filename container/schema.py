@@ -7,7 +7,7 @@ import copy
 import spack.schema.env
 
 # We need to take control of a few configuration details
-# to generate
+# to generate an image correctly
 manifest_schema = copy.deepcopy(
     spack.schema.env.schema['patternProperties']['^env|spack$']
 )
@@ -18,9 +18,10 @@ config_schema = manifest_schema['properties']['config']
 del config_schema['properties']['install_tree']
 config_schema['additionalProperties'] = False
 
-schema = {
-    '$schema': 'http://json-schema.org/schema#',
-    'title': 'File schema for container recipe generation',
+# Options that are specific to container image generation
+container = {}
+
+container_schema = {
     'type': 'object',
     'additionalProperties': False,
     'properties': {
@@ -45,12 +46,6 @@ schema = {
                 }
             }
         },
-        # Describes how we want to make the executables and
-        # libraries available to users.
-        'provisioning': {
-            'type': 'string',
-            'enum': ['path']
-        },
         # Additional system packages that are needed at runtime
         'packages': {
             'type': 'array',
@@ -60,7 +55,6 @@ schema = {
         },
         # The portion of Spack environment file that can be used
         # to describe what to install and how to configure it
-        'manifest': manifest_schema,
         'environment': {
             'type': 'array'
             # TODO: implement this later, it needs #spack/13357
@@ -78,5 +72,17 @@ schema = {
         #    'default': {},
         # }
     },
-    'required': ['format', 'base', 'provisioning', 'manifest']
+    'required': ['format', 'base']
+}
+
+manifest_schema['properties']['container'] = container_schema
+
+schema = {
+    '$schema': 'http://json-schema.org/schema#',
+    'title': 'Spack environment file schema',
+    'type': 'object',
+    'additionalProperties': False,
+    'patternProperties': {
+        '^env|spack$': manifest_schema
+    }
 }

@@ -10,18 +10,19 @@ import spack.util.spack_yaml as syaml
 @pytest.fixture()
 def minimal_configuration():
     return {
-        'format': 'docker',
-        'base': {
-            'image': 'ubuntu:18.04',
-            'spack': 'develop'
-        },
-        'provisioning': 'path',
-        'manifest': {
+        'spack': {
             'specs': [
                 'gromacs',
                 'mpich',
                 'fftw precision=float'
-            ]
+            ],
+            'container': {
+                'format': 'docker',
+                'base': {
+                    'image': 'ubuntu:18.04',
+                    'spack': 'develop'
+                }
+            }
         }
     }
 

@@ -6,6 +6,7 @@
 convenience functions.
 """
 import collections
+import copy
 
 import spack.schema.env
 import spack.tengine as tengine
@@ -39,7 +40,7 @@ def recipe_writers(configuration):
     """
     # FIXME: At the moment return a list with a single writer. Check later
     # FIXME: if we should generalize to multiple writers or simplify this API
-    name = configuration['format']
+    name = configuration['spack']['container']['format']
     return [_writer_factory[name](configuration)]
 
 
@@ -54,7 +55,7 @@ class PathContext(tengine.Context):
     @tengine.context_property
     def run(self):
         """Information related to the run image."""
-        image = self.config['base']['image']
+        image = self.config['spack']['container']['base']['image']
         Run = collections.namedtuple('Run', ['image'])
         return Run(image=image)
 
@@ -63,8 +64,8 @@ class PathContext(tengine.Context):
         """Information related to the build image."""
 
         # Map the final image to the correct build image
-        run_image = self.config['base']['image']
-        spack_version = self.config['base']['spack']
+        run_image = self.config['spack']['container']['base']['image']
+        spack_version = self.config['spack']['container']['base']['spack']
         image, tag = build_info(run_image, spack_version)
 
         Build = collections.namedtuple('Build', ['image', 'tag'])
@@ -87,7 +88,11 @@ class PathContext(tengine.Context):
         """The spack.yaml file that should be used in the image"""
         import jsonschema
         # Copy in the part of spack.yaml prescribed in the configuration file
-        manifest = self.config['manifest']
+        manifest = copy.deepcopy(self.config['spack'])
+
+        # FIXME: Here we need to know that other attributes might be incompatible,
+        # FIXME: and are not related to container images, for instance gitlab-ci? or cdash?
+        manifest.pop('container')
 
         # Ensure that a few paths are where they need to be
         manifest['config'] = syaml.syaml_dict()
@@ -108,7 +113,7 @@ class PathContext(tengine.Context):
         if not package_list:
             return package_list
 
-        image = self.config['base']['image']
+        image = self.config['spack']['container']['base']['image']
         update, install, clean = package_info(image)
         Packages = collections.namedtuple(
             'Packages', ['update', 'install', 'list', 'clean']
