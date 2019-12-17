@@ -103,16 +103,6 @@ spack:
       image: "ubuntu:18.04"
       spack: prerelease
 
-    # Provisioning is how we want to make the executables available
-    # to the user. At the moment it could either be:
-    #
-    # 1. path (implies "concretization: together", views in "opt/view")
-    # 2. modules (implies "views: None", bootstrapping module files, sourcing them on start)
-    #
-    # We can provide a verbose way to set this option to customize the defaults
-    # i.e. to install software in places that are not /opt/software etc.
-    provisioning: path
-
     # Additional system packages that are needed at runtime
     packages:
     - libgomp1
@@ -131,5 +121,5 @@ spack:
     
     labels:
       author: "Massimiliano Culpo"
-      target: "broadwell"```
+      target: "broadwell"
 ```

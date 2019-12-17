@@ -21,8 +21,7 @@ def minimal_configuration():
                 'base': {
                     'image': 'ubuntu:18.04',
                     'spack': 'develop'
-                },
-                'provisioning': 'path',
+                }
             }
         }
     }

@@ -46,12 +46,6 @@ container_schema = {
                 }
             }
         },
-        # Describes how we want to make the executables and
-        # libraries available to users.
-        'provisioning': {
-            'type': 'string',
-            'enum': ['path']
-        },
         # Additional system packages that are needed at runtime
         'packages': {
             'type': 'array',
@@ -78,7 +72,7 @@ container_schema = {
         #    'default': {},
         # }
     },
-    'required': ['format', 'base', 'provisioning']
+    'required': ['format', 'base']
 }
 
 manifest_schema['properties']['container'] = container_schema
